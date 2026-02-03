@@ -1,0 +1,15 @@
+FROM n8nio/n8n:latest
+
+USER root
+
+# 1. التعديل هنا: استخدام apt-get بدلاً من apk لتحديث المكتبة المصابة
+RUN apt-get update && \
+    apt-get install -y openssl
+
+# 2. ضبط الصلاحيات للمستخدم 10014
+RUN chown -R 10014:10014 /home/node
+
+ENV HOME=/home/node
+
+# 3. تشغيل المستخدم
+USER 10014
