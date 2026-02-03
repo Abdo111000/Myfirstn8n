@@ -1,0 +1,18 @@
+# 1. التغيير الجوهري: نستخدم نسخة debian لأنها تقبل التعديل والتحديث
+FROM n8nio/n8n:latest-debian
+
+USER root
+
+# 2. الآن هذا الأمر سيعمل (لأن دبيان فيها apt-get)
+# سيقوم بتحديث مكتبة openssl وسد الثغرة التي يشتكي منها الفحص
+RUN apt-get update && \
+    apt-get install -y openssl && \
+    apt-get upgrade -y
+
+# 3. ضبط الصلاحيات للمستخدم 10014 (عشان Choreo يوافق يكمل)
+RUN chown -R 10014:10014 /home/node
+
+ENV HOME=/home/node
+
+# 4. تشغيل المستخدم
+USER 10014
