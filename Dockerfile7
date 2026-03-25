@@ -1,0 +1,31 @@
+# 1. نستخدم صورة Node.js حديثة جداً (Bookworm) خالية من الثغرات
+FROM node:20-bookworm-slim
+
+# الدخول كمدير
+USER root
+
+# 2. تحديث النظام وتنزيل openssl
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y openssl
+
+# 3. السر هنا: تحديث npm الأول، وبعدين تسطيب n8n بهدوء بـ maxsockets=1 عشان نتجنب خطأ EMFILE
+RUN npm install -g npm@latest && \
+    npm cache clean --force && \
+    npm install -g n8n --maxsockets=1
+
+# 4. إنشاء المستخدم 10014 الذي يطلبه Choreo وتجهيز المجلدات (كودك الممتاز)
+RUN groupadd -g 10014 choreo && \
+    useradd -m -u 10014 -g choreo choreo && \
+    mkdir -p /home/choreo/.n8n && \
+    chown -R 10014:10014 /home/choreo
+
+# 5. تحديد مسار البيانات
+ENV HOME=/home/choreo
+ENV N8N_USER_ID=10014
+
+# 6. التحويل للمستخدم
+USER 10014
+
+# 7. أمر التشغيل
+CMD ["n8n"]
