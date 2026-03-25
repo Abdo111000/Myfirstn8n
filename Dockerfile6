@@ -1,0 +1,27 @@
+# 1. استخدام الصورة الرسمية الجاهزة من n8n (وده هيمنع خطأ EMFILE تماماً لأن n8n متسطب بالفعل)
+FROM n8nio/n8n:latest
+
+# 2. الدخول كمدير نظام (root) عشان نقدر نعدل الصلاحيات المطلوبة لمنصة Choreo
+USER root
+
+# 3. إنشاء المستخدم 10014 الذي يطلبه Choreo وتجهيز مجلدات العمل الخاصة به
+RUN groupadd -g 10014 choreo && \
+    useradd -m -u 10014 -g choreo choreo
+
+# 4. نسخ ملفات n8n من المستخدم الافتراضي (node) إلى المستخدم الجديد (choreo) وإعطائه الصلاحيات
+# هذه الخطوة مهمة جداً لضمان عمل البرنامج بصلاحيات المستخدم 10014
+RUN cp -r /home/node/.n8n /home/choreo/ 2>/dev/null || true && \
+    chown -R choreo:choreo /home/choreo && \
+    chown -R choreo:choreo /usr/local/lib/node_modules/n8n 2>/dev/null || true && \
+    chown -R choreo:choreo /usr/local/bin/n8n 2>/dev/null || true
+
+# 5. تحديد متغيرات البيئة ومسار البيانات للمستخدم الجديد
+ENV HOME=/home/choreo
+ENV N8N_USER_FOLDER=/home/choreo
+ENV N8N_USER_ID=10014
+
+# 6. التحويل للمستخدم 10014 (وهو ما تتطلبه Choreo لتشغيل السيرفر)
+USER 10014
+
+# 7. أمر التشغيل
+CMD ["n8n"]
